@@ -1,5 +1,3 @@
-mbed-os.lib
-
 # Prerequisites
 *.d
 
@@ -32,3 +30,6 @@ mbed-os.lib
 *.exe
 *.out
 *.app
+
+mbed-os.lib
+mbed-os-build
