@@ -8,7 +8,7 @@ import csv
 # Part. 2
 #=======================================
 # Read cwb weather data
-cwb_filename = 'sample_input.csv'
+cwb_filename = '106061151.csv'
 data = []
 header = []
 with open(cwb_filename) as csvfile:
@@ -35,8 +35,8 @@ for i in station_id:
     n = 0
     
     for j in target_data:
-        if j['PRESS'] != '-99.000' and j['PRESS'] != '-999.000':
-            sum += float(j['PRESS'])
+        if j['PRES'] != '-99.000' and j['PRES'] != '-999.000':
+            sum += float(j['PRES'])
             n += 1
     
     if n == 0:
