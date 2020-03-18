@@ -31,5 +31,15 @@
 *.out
 *.app
 
+
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+
 mbed-os.lib
 mbed-os-build
+BUILD
