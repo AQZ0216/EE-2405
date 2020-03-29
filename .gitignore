@@ -43,3 +43,7 @@
 mbed-os.lib
 mbed-os-build
 BUILD
+.mbed
+mbed_settings.py
+TextLCD
+4DGL-uLCD-SE
