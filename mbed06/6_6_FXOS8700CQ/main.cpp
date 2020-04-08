@@ -1,6 +1,8 @@
 #include "mbed.h"
 #include "fsl_port.h"
 #include "fsl_gpio.h"
+#include "uLCD_4DGL.h"
+
 #define UINT14_MAX        16383
 // FXOS8700CQ I2C address
 #define FXOS8700CQ_SLAVE_ADDR0 (0x1E<<1) // with pins SA0=0, SA1=0
@@ -24,6 +26,8 @@
 
 I2C i2c( PTD9,PTD8);
 Serial pc(USBTX, USBRX);
+uLCD_4DGL uLCD(D1, D0, D2); // serial tx, serial rx, reset pin;
+
 int m_addr = FXOS8700CQ_SLAVE_ADDR1;
 
 void FXOS8700CQ_readRegs(int addr, uint8_t * data, int len);
@@ -67,7 +71,9 @@ int main() {
          acc16 -= UINT14_MAX;
       t[2] = ((float)acc16) / 4096.0f;
 
-      printf("FXOS8700Q ACC: X=%1.4f(%x%x) Y=%1.4f(%x%x) Z=%1.4f(%x%x)\r\n",\
+      uLCD.reset();
+      uLCD.locate(0,0);
+      uLCD.printf("FXOS8700Q ACC: X=%1.4f(%x%x) Y=%1.4f(%x%x) Z=%1.4f(%x%x)\r\n",\
             t[0], res[0], res[1],\
             t[1], res[2], res[3],\
             t[2], res[4], res[5]\
