@@ -42,6 +42,7 @@
 
 mbed-os.lib
 mbed-os-build
+mbed-os-build-i2c
 BUILD
 .mbed
 mbed_settings.py
