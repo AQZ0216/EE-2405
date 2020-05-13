@@ -25,15 +25,11 @@ int noteLength[42] = {
 
 void playNote(int freq)
 {
-  for (int i = 0; i < kAudioTxBufferSize; i++)
+  for(int i = 0; i < kAudioTxBufferSize; i++)
   {
     waveform[i] = (int16_t) (sin((double)i * 2. * M_PI/(double) (kAudioSampleFrequency / freq)) * ((1<<16) - 1));
   }
-  // the loop below will play the note for the duration of 1s
-  for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
-  {
-    audio.spk.play(waveform, kAudioTxBufferSize);
-  }
+  audio.spk.play(waveform, kAudioTxBufferSize);
 }
 
 int main(void)
@@ -45,8 +41,12 @@ int main(void)
     int length = noteLength[i];
     while(length--)
     {
-      queue.call(playNote, song[i]);
-      if(length <= 1) wait(1.0);
+      // the loop below will play the note for the duration of 1s
+      for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
+      {
+        queue.call(playNote, song[i]);
+      }
+      if(length < 1) wait(1.0);
     }
   }
 }

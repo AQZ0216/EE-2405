@@ -7,7 +7,7 @@ waitTime = 0.1
 # generate the waveform table
 signalLength = 1024
 t = np.linspace(0, 2*np.pi, signalLength)
-signalTable = (np.sin(t) + 1.0) / 2.0 * ((1<<16) - 1)
+signalTable = (np.sin(t) + 1.0) / 2.0
 
 # output formatter
 formatter = lambda x: "%.3f" % x

@@ -15,7 +15,7 @@ EventQueue queue(32 * EVENTS_EVENT_SIZE);
 Thread t;
 int idC = 0;
 
-int16_t signal[signalLength];
+float signal[signalLength];
 int16_t waveform[kAudioTxBufferSize];
 char serialInBuffer[bufferLength];
 int serialCount = 0;
@@ -50,7 +50,7 @@ void playNote(int freq)
 {
   for (int i = 0; i < kAudioTxBufferSize; i++)
   {
-    waveform[i] = (int16_t) (signal[(uint16_t) (i * freq * signalLength * 1. / kAudioSampleFrequency) % signalLength]);
+    waveform[i] = (int16_t) (signal[(uint16_t) (i * freq * signalLength * 1. / kAudioSampleFrequency) % signalLength] * ((1<<16) - 1));
   }
   // the loop below will play the note for the duration of 1s
   for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
