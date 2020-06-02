@@ -38,8 +38,6 @@ int main() {
 void LEDControl (Arguments *in, Reply *out)   {
     bool success = true;
 
-
-
     while(1){
         // Have code here to call another RPC function to wake up specific led or close it.
         char buffer[200], outbuf[256];
