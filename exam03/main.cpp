@@ -178,7 +178,6 @@ void check_addr(char *xbee_reply, char *messenger){
 
 void getVelocity(Arguments *in, Reply *out) {
    xbee.printf("%1.3f\r\n", velocity);
-   pc.printf("%1.3f\r\n", velocity);
    velocity = 0;
 }
 

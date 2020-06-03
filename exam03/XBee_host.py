@@ -79,17 +79,16 @@ print(char.decode())
 print("start sending RPC")
 
 s.write("/getVelocity/run\r".encode())
+time.sleep(1)
 char = s.read(1)
 while True:
     # send RPC to remote
     s.write("/getVelocity/run\r".encode())
+    time.sleep(1)
 
-    line=s.read(1) # Read an echo string from K66F terminated with '\n'
-    print(line)
-    mesg = float(line)
+    mesg=s.readline() # Read an echo string from K66F terminated with '\n'
 
     mqttc.publish(topic, mesg)
     print(mesg)
-    time.sleep(1)
 
 s.close()
