@@ -29,11 +29,6 @@ def on_message(mosq, obj, msg):
       if i >= 5 and i < 165:
             data[i-5] = float(msg.payload)
             if i == 164:
-                  print(data[0::4])
-                  print(data[1::4])
-                  print(data[2::4])
-                  print(data[3::4])
-
                   fig, ax = plt.subplots(2, 1)
                   ax[0].plot(t, data[0::4], color="blue", label="x")
                   ax[0].plot(t, data[1::4], color="red", label="y")
@@ -45,7 +40,6 @@ def on_message(mosq, obj, msg):
                   ax[1].set_xlabel('Time')
                   ax[1].set_ylabel('Tilt')
                   plt.show()
-      print(i)
       i += 1
 
 def on_subscribe(mosq, obj, mid, granted_qos):

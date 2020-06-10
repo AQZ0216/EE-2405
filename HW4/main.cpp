@@ -170,7 +170,6 @@ void reply_messange(char *xbee_reply, char *messange){
   xbee_reply[0] = xbee.getc();
   xbee_reply[1] = xbee.getc();
   xbee_reply[2] = xbee.getc();
-  pc.printf("%s\r\n", messange);
   if(xbee_reply[1] == 'O' && xbee_reply[2] == 'K'){
     pc.printf("%s\r\n", messange);
     xbee_reply[0] = '\0';
