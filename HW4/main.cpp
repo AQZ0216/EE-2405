@@ -2,9 +2,6 @@
 #include "mbed_rpc.h"
 #include "fsl_port.h"
 #include "fsl_gpio.h"
-#include "MQTTNetwork.h"
-#include "MQTTmbed.h"
-#include "MQTTClient.h"
 
 #define UINT14_MAX        16383
 // FXOS8700CQ I2C address
@@ -35,69 +32,33 @@ int m_addr = FXOS8700CQ_SLAVE_ADDR1;
 EventQueue queue(32 * EVENTS_EVENT_SIZE);
 Thread thr;
 
-// GLOBAL VARIABLES
-WiFiInterface *wifi;
-InterruptIn btn2(SW2);
-InterruptIn btn3(SW3);
-volatile int message_num = 0;
-volatile int arrivedcount = 0;
-volatile bool closed = false;
+float x[40];
+float y[40];
+float z[40];
+int idx = 0;
 
-const char* topic = "Mbed";
-
-Thread mqtt_thread(osPriorityHigh);
-EventQueue mqtt_queue;
-
-float* stationary;
-float len_stationary;
+float t[3];
 int number = 0;
 
 void FXOS8700CQ_readRegs(int addr, uint8_t * data, int len);
 void FXOS8700CQ_writeRegs(uint8_t * data, int len);
 
 void getReport(Arguments *in, Reply *out);
+void getRecord(Arguments *in, Reply *out);
 
 RPCFunction rpcReport(&getReport, "getReport");
+RPCFunction rpcRecord(&getRecord, "getRecord");
 
 void xbee_rx_interrupt(void);
 void xbee_rx(void);
 void reply_messange(char *xbee_reply, char *messange);
 void check_addr(char *xbee_reply, char *messenger);
 
-void messageArrived(MQTT::MessageData& md) {
-      MQTT::Message &message = md.message;
-      char msg[300];
-      sprintf(msg, "Message arrived: QoS%d, retained %d, dup %d, packetID %d\r\n", message.qos, message.retained, message.dup, message.id);
-      printf(msg);
-      wait_ms(1000);
-      char payload[300];
-      sprintf(payload, "Payload %.*s\r\n", message.payloadlen, (char*)message.payload);
-      printf(payload);
-      ++arrivedcount;
-}
-
-void publish_message(MQTT::Client<MQTTNetwork, Countdown>* client, float t[3]) {
-      message_num++;
-      MQTT::Message message;
-      char buff[100];
-      sprintf(buff, "%1.4f\r\n%1.4f\r\n%1.4f\r\n", t[0], t[1], t[2]);
-      message.qos = MQTT::QOS0;
-      message.retained = false;
-      message.dup = false;
-      message.payload = (void*) buff;
-      message.payloadlen = strlen(buff) + 1;
-      int rc = client->publish(topic, message);
-
-      printf("rc:  %d\r\n", rc);
-      printf("Puslish message: %s\r\n", buff);
-}
-
-void close_mqtt() {
-      closed = true;
-}
-
 int main(){
   uint8_t data[2] ;
+  int16_t acc16;
+  uint8_t res[6];
+
   // Enable the FXOS8700Q
   FXOS8700CQ_readRegs( FXOS8700Q_CTRL_REG1, &data[1], 1);
   data[1] |= 0x01;
@@ -142,145 +103,42 @@ int main(){
 
   // start
   pc.printf("start\r\n");
-  
 
-      wifi = WiFiInterface::get_default_instance();
-      if (!wifi) {
-            printf("ERROR: No WiFiInterface found.\r\n");
-            return -1;
-      }
+  // Setup a serial interrupt function of receiving data from xbee
+  thr.start(callback(&queue, &EventQueue::dispatch_forever));
+  xbee.attach(xbee_rx_interrupt, Serial::RxIrq);
 
+    while (1) {
+        FXOS8700CQ_readRegs(FXOS8700Q_OUT_X_MSB, res, 6);
 
-      printf("\nConnecting to %s...\r\n", MBED_CONF_APP_WIFI_SSID);
-      int ret = wifi->connect(MBED_CONF_APP_WIFI_SSID, MBED_CONF_APP_WIFI_PASSWORD, NSAPI_SECURITY_WPA_WPA2);
-      if (ret != 0) {
-            printf("\nConnection error: %d\r\n", ret);
-            return -1;
-      }
+        acc16 = (res[0] << 6) | (res[1] >> 2);
+        if (acc16 > UINT14_MAX/2)
+        acc16 -= UINT14_MAX;
+        t[0] = ((float)acc16) / 4096.0f;
 
+        acc16 = (res[2] << 6) | (res[3] >> 2);
+        if (acc16 > UINT14_MAX/2)
+        acc16 -= UINT14_MAX;
+        t[1] = ((float)acc16) / 4096.0f;
 
-      NetworkInterface* net = wifi;
-      MQTTNetwork mqttNetwork(net);
-      MQTT::Client<MQTTNetwork, Countdown> client(mqttNetwork);
+        acc16 = (res[4] << 6) | (res[5] >> 2);
+        if (acc16 > UINT14_MAX/2)
+        acc16 -= UINT14_MAX;
+        t[2] = ((float)acc16) / 4096.0f;
 
-      //TODO: revise host to your ip
-      const char* host = "192.168.1.39";
-      printf("Connecting to TCP network...\r\n");
-      int rc = mqttNetwork.connect(host, 1883);
-      if (rc != 0) {
-            printf("Connection error.");
-            return -1;
-      }
-      printf("Successfully connected!\r\n");
+        number += 1;
 
-      MQTTPacket_connectData MQTT_data = MQTTPacket_connectData_initializer;
-      MQTT_data.MQTTVersion = 3;
-      MQTT_data.clientID.cstring = "Mbed";
+        if(idx < 40){
+          x[idx] = t[0];
+          y[idx] = t[1];
+          z[idx] = t[2];
+          idx += 1;
+        }
 
-      if ((rc = client.connect(MQTT_data)) != 0){
-            printf("Fail to connect MQTT\r\n");
-      }
-      if (client.subscribe(topic, MQTT::QOS0, messageArrived) != 0){
-            printf("Fail to subscribe\r\n");
-      }
+        wait(0.5);
+    }
 
-      mqtt_thread.start(callback(&mqtt_queue, &EventQueue::dispatch_forever));
-      // Setup a serial interrupt function of receiving data from xbee
-      thr.start(callback(&queue, &EventQueue::dispatch_forever));
-      btn3.rise(&close_mqtt);
-      xbee.attach(xbee_rx_interrupt, Serial::RxIrq);
-
-      int num = 0;
-      while (num != 5) {
-            client.yield(100);
-            ++num;
-      }
-
-      uint8_t who_am_i, FXOS8700Q_data[2], res[6];
-      int16_t acc16;
-      float t[3];
-      float len_t;
-      float angle;
-
-      // Enable the FXOS8700Q
-
-      FXOS8700CQ_readRegs( FXOS8700Q_CTRL_REG1, &FXOS8700Q_data[1], 1);
-      FXOS8700Q_data[1] |= 0x01;
-      FXOS8700Q_data[0] = FXOS8700Q_CTRL_REG1;
-      FXOS8700CQ_writeRegs(FXOS8700Q_data, 2);
-
-      // Get the slave address
-      FXOS8700CQ_readRegs(FXOS8700Q_WHOAMI, &who_am_i, 1);
-
-      printf("Here is %x\r\n", who_am_i);
-
-      FXOS8700CQ_readRegs(FXOS8700Q_OUT_X_MSB, res, 6);
-
-      acc16 = (res[0] << 6) | (res[1] >> 2);
-      if (acc16 > UINT14_MAX/2)
-      acc16 -= UINT14_MAX;
-      stationary[0] = ((float)acc16) / 4096.0f;
-
-      acc16 = (res[2] << 6) | (res[3] >> 2);
-      if (acc16 > UINT14_MAX/2)
-      acc16 -= UINT14_MAX;
-      stationary[1] = ((float)acc16) / 4096.0f;
-
-      acc16 = (res[4] << 6) | (res[5] >> 2);
-      if (acc16 > UINT14_MAX/2)
-      acc16 -= UINT14_MAX;
-      stationary[2] = ((float)acc16) / 4096.0f;
-
-      len_stationary = sqrt(stationary[0]*stationary[0] + stationary[1]*stationary[1] + stationary[2]*stationary[2]);   
-
-      while (1) {
-            if (closed) break;
-            FXOS8700CQ_readRegs(FXOS8700Q_OUT_X_MSB, res, 6);
-
-            acc16 = (res[0] << 6) | (res[1] >> 2);
-            if (acc16 > UINT14_MAX/2)
-            acc16 -= UINT14_MAX;
-            t[0] = ((float)acc16) / 4096.0f;
-
-            acc16 = (res[2] << 6) | (res[3] >> 2);
-            if (acc16 > UINT14_MAX/2)
-            acc16 -= UINT14_MAX;
-            t[1] = ((float)acc16) / 4096.0f;
-
-            acc16 = (res[4] << 6) | (res[5] >> 2);
-            if (acc16 > UINT14_MAX/2)
-            acc16 -= UINT14_MAX;
-            t[2] = ((float)acc16) / 4096.0f;
-
-            len_t = sqrt(t[0]*t[0] + t[1]*t[1] + t[2]*t[2]);
-            angle = (t[0]*stationary[0] + t[1]*stationary[1] + t[2]*stationary[2]) / len_stationary / len_t;
-
-            // if(angle < 0.70710678118){
-            //     tilt[i] = 1;
-            // }else{
-            //     tilt[i] = 0;
-            // }
-
-            mqtt_queue.call(publish_message, &client, t);
-
-            number += 1;
-
-            wait(0.5);
-      }
-
-      printf("Ready to close MQTT Network......\n");
-
-      if ((rc = client.unsubscribe(topic)) != 0) {
-            printf("Failed: rc from unsubscribe was %d\n", rc);
-      }
-      if ((rc = client.disconnect()) != 0) {
-      printf("Failed: rc from disconnect was %d\n", rc);
-      }
-
-      mqttNetwork.disconnect();
-      printf("Successfully closed!\n");
-
-      return 0;
+    return 0;
 }
 
 void xbee_rx_interrupt(void)
@@ -312,6 +170,7 @@ void reply_messange(char *xbee_reply, char *messange){
   xbee_reply[0] = xbee.getc();
   xbee_reply[1] = xbee.getc();
   xbee_reply[2] = xbee.getc();
+  pc.printf("%s\r\n", messange);
   if(xbee_reply[1] == 'O' && xbee_reply[2] == 'K'){
     pc.printf("%s\r\n", messange);
     xbee_reply[0] = '\0';
@@ -346,4 +205,13 @@ void FXOS8700CQ_writeRegs(uint8_t * data, int len) {
 void getReport (Arguments *in, Reply *out)   {
     xbee.printf("%d\r\n", number);
     number = 0;
+}
+
+void getRecord (Arguments *in, Reply *out)   {
+    for(int i = 0; i < 40; i++){
+        xbee.printf("%1.3f\r\n", x[i]);
+        xbee.printf("%1.3f\r\n", y[i]);
+        xbee.printf("%1.3f\r\n", z[i]);
+        wait(0.1);
+    }
 }
