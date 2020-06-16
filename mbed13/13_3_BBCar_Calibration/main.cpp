@@ -9,9 +9,9 @@ BBCar car(pin8, pin9, servo_ticker);
 int main() {
     // please contruct you own calibration table with each servo
     double pwm_table0[] = {-150, -120, -90, -60, -30, 0, 30, 60, 90, 120, 150};
-    double speed_table0[] = {-10.445, -9.812, -9.647, -9.408, -5.900, 0.000, 5.900, 10.843, 11.880, 11.401, 12.199};
+    double speed_table0[] = {-16.907, -16.986, -15.870, -12.840, -6.858, 0.000, 4.865, 10.686, 14.275, 15.631, 16.508};
     double pwm_table1[] = {-150, -120, -90, -60, -30, 0, 30, 60, 90, 120, 150};
-    double speed_table1[] = {-10.445, -9.812, -9.647, -9.408, -5.900, 0.000, 5.900, 10.843, 11.880, 11.401, 12.199};
+    double speed_table1[] = {-17.066, -16.508, -15.232, -11.563, -4.067, 0.000, 2.073, 12.281, 15.232, 16.349, 16.668};
 
     // first and fourth argument : length of table
     car.setCalibTable(11, pwm_table0, speed_table0, 11, pwm_table1, speed_table1);
