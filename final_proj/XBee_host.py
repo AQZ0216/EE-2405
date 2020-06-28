@@ -1,5 +1,3 @@
-import matplotlib.pyplot as plt
-import numpy as np
 import serial
 import time
 import paho.mqtt.client as paho
@@ -78,52 +76,10 @@ char = s.read(3)
 print("Exit AT mode.")
 print(char.decode())
 
-print("start sending RPC")
-
-t = np.arange(0,20,1)
-
-n = np.arange(0,20,1)
-
-s.write("/getReport/run\r".encode())
-time.sleep(1)
-char = s.read(1)
-print(char)
-
-for i in range(20):
-    # send RPC to remote
-    s.write("/getReport/run\r".encode())
-
-    line=s.readline() # Read an echo string from K66F terminated with '\n'
-    print(line)
-    n[i] = float(line)
-
-    time.sleep(1)
-
-s.write("/getRecord/run\r".encode())
-
 for i in range(40):
     line=s.readline() # Read an echo string from K66F terminated with '\n'
     mqttc.publish(topic, line)
     print(line)
-    line=s.readline() # Read an echo string from K66F terminated with '\n'
-    mqttc.publish(topic, line)
-    print(line)
-    line=s.readline() # Read an echo string from K66F terminated with '\n'
-    mqttc.publish(topic, line)
-    print(line)
-    z = float(line)
-
-    if z < 0.707:
-        line = "1\r\n".encode()
-    else:
-        line = "0\r\n".encode()
-
-    mqttc.publish(topic, line)
-
     time.sleep(0.1)
 
-plt.plot(t, n, color="blue", label="n")
-plt.xlabel('Time')
-plt.ylabel('Acc Vector')
-plt.show()
 s.close()
