@@ -51,18 +51,17 @@ def datamatrix():
     sensor.set_auto_whitebal(False)  # must turn this off to prevent image washout...
     clock = time.clock()
 
-    while(True):
-        clock.tick()
-        img = sensor.snapshot()
-        img.lens_corr(1.8) # strength of 1.8 is good for the 2.8mm lens.
+    clock.tick()
+    img = sensor.snapshot()
+    img.lens_corr(1.8) # strength of 1.8 is good for the 2.8mm lens.
 
-        matrices = img.find_datamatrices()
-        for matrix in matrices:
-            img.draw_rectangle(matrix.rect(), color = (255, 0, 0))
-            print_args = (matrix.rows(), matrix.columns(), matrix.payload(), (180 * matrix.rotation()) / math.pi, clock.fps())
-            uart.write(("Matrix [%d:%d], Payload \"%s\", rotation %f (degrees), FPS %f\r\n" % print_args).encode())
-        if not matrices:
-            uart.write(("FPS %f\r\n" % clock.fps()).encode())
+    matrices = img.find_datamatrices()
+    for matrix in matrices:
+        img.draw_rectangle(matrix.rect(), color = (255, 0, 0))
+        print_args = (matrix.rows(), matrix.columns(), matrix.payload(), (180 * matrix.rotation()) / math.pi, clock.fps())
+        uart.write(("Matrix [%d:%d], Payload \"%s\", rotation %f (degrees), FPS %f\r\n" % print_args).encode())
+    if not matrices:
+        uart.write(("FPS %f\r\n" % clock.fps()).encode())
     return
 
 while(1):
