@@ -336,7 +336,7 @@ int main(int argc, char* argv[])
   green_led = 1;
   
   t.start(callback(&queue, &EventQueue::dispatch_forever));
-  display_thread.start(&display_queue, &EventQueue::dispatch_forever);
+  display_thread.start(callback(&display_queue, &EventQueue::dispatch_forever));
 
   pause.rise(queue.event(modeSelectionHandler));
 

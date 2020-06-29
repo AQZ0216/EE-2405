@@ -76,7 +76,7 @@ char = s.read(3)
 print("Exit AT mode.")
 print(char.decode())
 
-for i in range(40):
+while(1):
     line=s.readline() # Read an echo string from K66F terminated with '\n'
     mqttc.publish(topic, line)
     print(line)

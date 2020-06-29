@@ -23,24 +23,7 @@ def on_connect(self, mosq, obj, rc):
       print("Connected rc: " + str(rc))
 
 def on_message(mosq, obj, msg):
-      print("[Received] Topic: " + msg.topic + ", Message: " + str(msg.payload) + "\n")
-      global i
-      global data
-      if i >= 5 and i < 165:
-            data[i-5] = float(msg.payload)
-            if i == 164:
-                  fig, ax = plt.subplots(2, 1)
-                  ax[0].plot(t, data[0::4], color="blue", label="x")
-                  ax[0].plot(t, data[1::4], color="red", label="y")
-                  ax[0].plot(t, data[2::4], color="green", label="z")
-                  ax[0].set_xlabel('Time')
-                  ax[0].set_ylabel('Acc Vector')
-                  ax[0].legend(loc='lower left')
-                  ax[1].stem(t, data[3::4])
-                  ax[1].set_xlabel('Time')
-                  ax[1].set_ylabel('Tilt')
-                  plt.show()
-      i += 1
+      print(str(msg.payload) + "\n");
 
 def on_subscribe(mosq, obj, mid, granted_qos):
       print("Subscribed OK")
